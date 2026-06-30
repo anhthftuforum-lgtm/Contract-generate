@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HR Contract Automation & Email Workflow</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Space+Mono&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Style -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Top Navigation Bar -->
+        <header class="app-header">
+            <div class="header-logo">
+                <div class="logo-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                <div class="logo-text">
+                    <h1>Antigravity</h1>
+                    <span>People Ops Automation</span>
+                </div>
+            </div>
+            <div class="header-status">
+                <div class="status-badge" id="workflow-status-badge">
+                    <span class="pulse-dot"></span>
+                    <span id="current-workflow-state-text">Nháp hợp đồng</span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-secondary" id="btn-show-architecture"><i class="fa-solid fa-sitemap"></i> Kiến trúc thực tế (Production)</button>
+                <button class="btn btn-secondary" id="btn-reset-app"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+            </div>
+        </header>
+
+        <!-- Main Dashboard Split Screen -->
+        <main class="app-body">
+            <!-- Left Panel: Workspace (Document Input & Contract Preview) -->
+            <section class="panel workspace-panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fa-solid fa-briefcase text-primary"></i>
+                        <h2>Không gian làm việc People Ops</h2>
+                    </div>
+                    <div class="tab-controls">
+                        <button class="tab-btn active" data-tab="tab-upload">1. Nhập tài liệu & Điền</button>
+                        <button class="tab-btn" data-tab="tab-preview" id="tab-preview-btn">2. Bản Xem Trước (A4)</button>
+                    </div>
+                </div>
+
+                <div class="panel-content">
+                    <!-- Tab 1: Upload & Form -->
+                    <div class="tab-content active" id="tab-upload">
+                        <!-- Step 1.1: Dropzones for files -->
+                        <div class="section-title">
+                            <h3>Tải hồ sơ nhân sự mới lên</h3>
+                            <p class="section-desc">Kéo thả hoặc nhấp chọn để tải các tài liệu của nhân viên mới (Hệ thống giả lập quét thông tin OCR)</p>
+                        </div>
+                        
+                        <div class="dropzone-grid">
+                            <!-- Card ID Dropzone -->
+                            <div class="dropzone" id="dropzone-id">
+                                <input type="file" id="file-id" accept="image/*,application/pdf" hidden>
+                                <div class="dropzone-inner" id="dropzone-id-inner">
+                                    <div class="file-icon"><i class="fa-solid fa-id-card"></i></div>
+                                    <h4>Ảnh CCCD / Passport</h4>
+                                    <span class="file-name-label">Kéo thả hoặc nhấp chọn</span>
+                                </div>
+                            </div>
+
+                            <!-- Offer Letter Dropzone -->
+                            <div class="dropzone" id="dropzone-offer">
+                                <input type="file" id="file-offer" accept="image/*,application/pdf" hidden>
+                                <div class="dropzone-inner" id="dropzone-offer-inner">
+                                    <div class="file-icon"><i class="fa-solid fa-envelope-open-text"></i></div>
+                                    <h4>Offer Approval Email</h4>
+                                    <span class="file-name-label">Kéo thả hoặc nhấp chọn</span>
+                                </div>
+                            </div>
+
+                            <!-- New Hire Request Dropzone -->
+                            <div class="dropzone" id="dropzone-request">
+                                <input type="file" id="file-request" accept="image/*,application/pdf,.xlsx,.xls" hidden>
+                                <div class="dropzone-inner" id="dropzone-request-inner">
+                                    <div class="file-icon"><i class="fa-solid fa-file-invoice"></i></div>
+                                    <h4>New Hire Request (TA)</h4>
+                                    <span class="file-name-label">Kéo thả hoặc nhấp chọn</span>
+                                </div>
+                            </div>
+
+                            <!-- Template Dropzone -->
+                            <div class="dropzone" id="dropzone-template">
+                                <input type="file" id="file-template" accept=".docx,.doc,.txt" hidden>
+                                <div class="dropzone-inner" id="dropzone-template-inner">
+                                    <div class="file-icon"><i class="fa-solid fa-file-word"></i></div>
+                                    <h4>Mẫu hợp đồng thử việc</h4>
+                                    <span class="file-name-label">Mẫu chuẩn mặc định</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Scan Trigger Button -->
+                        <div class="action-bar-center">
+                            <button class="btn btn-primary btn-lg btn-glow" id="btn-start-scan">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Antigravity Tự Động Trích Xuất Dữ Liệu
+                            </button>
+                        </div>
+
+                        <!-- Form editable fields -->
+                        <div class="form-container hidden" id="fields-form-container">
+                            <div class="section-title">
+                                <div class="title-with-actions">
+                                    <h3>Thông tin đã trích xuất từ tài liệu</h3>
+                                    <span class="badge badge-success"><i class="fa-solid fa-check"></i> Đã trích xuất thành công</span>
+                                </div>
+                                <p class="section-desc">Bạn vui lòng kiểm tra kỹ lại thông tin trích xuất bên dưới và chỉnh sửa nếu cần.</p>
+                            </div>
+                            
+                            <form id="contract-data-form">
+                                <div class="form-group-grid">
+                                    <div class="form-group">
+                                        <label for="new_hire_name">Họ và tên nhân sự mới <span class="required">*</span></label>
+                                        <input type="text" id="new_hire_name" required placeholder="Nguyen Van A">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="new_hire_dob">Ngày sinh <span class="required">*</span></label>
+                                        <input type="date" id="new_hire_dob" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="new_hire_gender">Giới tính</label>
+                                        <select id="new_hire_gender">
+                                            <option value="Nam">Nam</option>
+                                            <option value="Nữ">Nữ</option>
+                                            <option value="Khác">Khác</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="new_hire_cccd">Số CCCD / Passport <span class="required">*</span></label>
+                                        <input type="text" id="new_hire_cccd" required placeholder="001xxxxxxxx">
+                                    </div>
+                                    <div class="form-group full-width">
+                                        <label for="new_hire_address">Địa chỉ thường trú <span class="required">*</span></label>
+                                        <input type="text" id="new_hire_address" required placeholder="Số nhà, Đường, Phường/Xã, Quận/Huyện, Tỉnh/Thành">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="new_hire_role">Chức danh công việc <span class="required">*</span></label>
+                                        <input type="text" id="new_hire_role" required placeholder="Kỹ sư phần mềm">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="new_hire_dept">Phòng ban <span class="required">*</span></label>
+                                        <input type="text" id="new_hire_dept" required placeholder="Bộ phận Công nghệ">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="new_hire_salary">Mức lương thử việc <span class="required">*</span></label>
+                                        <div class="input-with-addon">
+                                            <input type="number" id="new_hire_salary" required placeholder="15000000">
+                                            <span class="addon">VNĐ/tháng</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="new_hire_exchange_rate">Tỷ giá quy đổi (VND/USD) <span class="required">*</span></label>
+                                        <div class="input-with-addon">
+                                            <input type="number" id="new_hire_exchange_rate" required value="25400" placeholder="25400">
+                                            <span class="addon">VNĐ</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="new_hire_duration">Thời gian thử việc <span class="required">*</span></label>
+                                        <select id="new_hire_duration">
+                                            <option value="1 tháng">1 tháng</option>
+                                            <option value="2 tháng" selected>2 tháng</option>
+                                            <option value="3 tháng">3 tháng</option>
+                                            <option value="15 ngày">15 ngày</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="new_hire_start_date">Ngày bắt đầu làm việc <span class="required">*</span></label>
+                                        <input type="date" id="new_hire_start_date" required>
+                                    </div>
+                                </div>
+
+                                <div class="form-actions">
+                                    <button type="button" class="btn btn-secondary" id="btn-preview-contract"><i class="fa-solid fa-eye"></i> Xem nháp hợp đồng (A4)</button>
+                                    <button type="button" class="btn btn-primary" id="btn-submit-to-hrd"><i class="fa-solid fa-paper-plane"></i> Tạo & Gửi Email Duyệt cho HRD</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Tab 2: Live A4 Contract Preview -->
+                    <div class="tab-content" id="tab-preview">
+                        <div class="preview-toolbar">
+                            <div class="toolbar-info">
+                                <i class="fa-solid fa-file-pdf text-danger"></i>
+                                <span>Preview: Hop-Dong-Thu-Viec.pdf (Nháp)</span>
+                            </div>
+                            <button class="btn btn-secondary btn-sm" id="btn-print-contract"><i class="fa-solid fa-print"></i> In / Xuất PDF</button>
+                        </div>
+
+                        <!-- A4 Document Wrapper -->
+                        <div class="a4-document-container">
+                            <div class="a4-page" id="contract-document-page">
+                                <!-- Standard Vietnam Probation Contract Content (Bilingual) -->
+                                <div class="contract-header">
+                                    <h3>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM / SOCIALIST REPUBLIC OF VIETNAM</h3>
+                                    <h4>ĐỘC LẬP - TỰ DO - HẠNH PHÚC / INDEPENDENCE - FREEDOM - HAPPINESS</h4>
+                                    <div class="divider"></div>
+                                    <h2>HỢP ĐỒNG THỬ VIỆC / PROBATION CONTRACT</h2>
+                                    <p class="contract-code">Số/No: <span id="doc-code">...</span>/HĐTV/2026</p>
+                                </div>
+
+                                <div class="contract-body">
+                                    <p><em>Hôm nay, ngày <span id="doc-today-day">...</span> tháng <span id="doc-today-month">...</span> năm 2026, tại văn phòng công ty chúng tôi gồm các bên: / Today, dated <span id="doc-today-day-en">...</span>/<span id="doc-today-month-en">...</span>/2026, at our office, we are:</em></p>
+                                    
+                                    <h4>BÊN SỬ DỤNG LAO ĐỘNG (BÊN A) / EMPLOYER (PARTY A):</h4>
+                                    <p><strong>CÔNG TY TNHH CÔNG NGHỆ ANTIGRAVITY VIỆT NAM / ANTIGRAVITY TECHNOLOGY CO., LTD.</strong></p>
+                                    <p>Đại diện bởi / Represented by: <strong>Ông/Mr. TRẦN THẾ ANH</strong> &nbsp;&nbsp;&nbsp;&nbsp; Chức vụ / Position: Giám đốc Điều hành (CEO)</p>
+                                    <p>Địa chỉ / Address: Tòa nhà Antigravity Tower, Cầu Giấy, Hà Nội / Antigravity Tower, Cau Giay, Hanoi</p>
+
+                                    <h4>BÊN LAO ĐỘNG (BÊN B) / EMPLOYEE (PARTY B):</h4>
+                                    <p>Họ và tên / Full name: <strong id="doc-name">Nguyen Van A</strong> &nbsp;&nbsp;&nbsp;&nbsp; Giới tính / Gender: <span id="doc-gender">Nam</span></p>
+                                    <p>Ngày sinh / Date of birth: <span id="doc-dob">...</span></p>
+                                    <p>Số CCCD/Passport / ID Card/Passport No.: <span id="doc-cccd">...</span></p>
+                                    <p>Địa chỉ thường trú / Permanent address: <span id="doc-address">...</span></p>
+
+                                    <p><em>Hai bên thỏa thuận ký kết hợp đồng thử việc với các điều khoản dưới đây: / Both parties agree to sign this probation contract under the terms below:</em></p>
+
+                                    <p><strong>Điều 1: Công việc và thời hạn hợp đồng / Article 1: Job Description and Contract Term</strong></p>
+                                    <p>- Vị trí công tác / Job position: <strong id="doc-role">Kỹ sư phần mềm</strong> tại Bộ phận / Department: <span id="doc-dept">Bộ phận Công nghệ</span></p>
+                                    <p>- Thời hạn thử việc / Probationary period: <span id="doc-duration">2 tháng</span>. Từ ngày / From date: <strong id="doc-start-date">...</strong></p>
+
+                                    <p><strong>Điều 2: Quyền lợi và Nghĩa vụ / Article 2: Rights and Obligations</strong></p>
+                                    <p>- Mức lương thử việc / Probationary salary: <strong id="doc-salary">...</strong> VNĐ/tháng / VND/month (tương đương / equivalent to: <strong id="doc-salary-usd">...</strong> USD/tháng / USD/month - tỷ giá / exchange rate: <span id="doc-exchange-rate">25.400</span> VNĐ/USD).</p>
+                                    <p>&nbsp;&nbsp;* Bằng chữ (VND) / In words (VND): <span id="doc-salary-words">...</span></p>
+                                    <p>&nbsp;&nbsp;* Bằng chữ (USD) / In words (USD): <span id="doc-salary-words-en">...</span></p>
+                                    <p>- Thời giờ làm việc / Working hours: 40 giờ/tuần / 40 hours/week (từ Thứ Hai đến Thứ Sáu / Monday to Friday).</p>
+                                    <p>- Các khoản phúc lợi xã hội theo quy định / Social benefits as per regulations.</p>
+
+                                    <p><strong>Điều 3: Điều khoản chung / Article 3: General Provisions</strong></p>
+                                    <p>- Hợp đồng được lập thành 02 bản có giá trị pháp lý như nhau, mỗi bên giữ 01 bản. / This contract is made in 02 originals of equal legal force, each party keeping 01 copy.</p>
+                                </div>
+
+                                <div class="contract-signatures">
+                                    <div class="sig-box">
+                                        <p><strong>Đại diện Bên B / Representing Party B</strong></p>
+                                        <p class="sig-title">(Ký và ghi rõ họ tên / Sign and write full name)</p>
+                                        <div class="sig-space"></div>
+                                        <p id="doc-signature-b" class="sig-name">Nguyen Van A</p>
+                                    </div>
+                                    <div class="sig-box">
+                                        <p><strong>Đại diện Bên A / Representing Party A</strong></p>
+                                        <p class="sig-title">Giám đốc Điều hành (CEO)</p>
+                                        <div class="sig-space-a" id="ceo-signature-area">
+                                            <!-- Dynamically filled stamp/sig on CEO Approval -->
+                                            <div class="stamp-container hidden" id="company-stamp">
+                                                <div class="red-stamp">
+                                                    <span class="stamp-outer">CÔNG TY TNHH ANTIGRAVITY *</span>
+                                                    <span class="stamp-inner">ĐÃ KÝ / SIGNED</span>
+                                                </div>
+                                                <div class="ceo-signature">Thế Anh</div>
+                                            </div>
+                                        </div>
+                                        <p class="sig-name">Trần Thế Anh</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Panel: Email Loop Simulator -->
+            <section class="panel email-panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fa-solid fa-envelope-open text-primary"></i>
+                        <h2>Trình Giả Lập Email Loop & Robot Tự Động</h2>
+                    </div>
+                </div>
+
+                <div class="panel-content flex-column">
+                    <!-- Workflow Progress Bar -->
+                    <div class="workflow-stepper">
+                        <div class="step active" id="step-1">
+                            <div class="step-num">1</div>
+                            <div class="step-label">Soạn thảo</div>
+                        </div>
+                        <div class="step-line" id="line-1"></div>
+                        <div class="step" id="step-2">
+                            <div class="step-num">2</div>
+                            <div class="step-label">HRD Duyệt</div>
+                        </div>
+                        <div class="step-line" id="line-2"></div>
+                        <div class="step" id="step-3">
+                            <div class="step-num">3</div>
+                            <div class="step-label">CEO Duyệt</div>
+                        </div>
+                        <div class="step-line" id="line-3"></div>
+                        <div class="step" id="step-4">
+                            <div class="step-num">4</div>
+                            <div class="step-label">Đã Ký</div>
+                        </div>
+                    </div>
+
+                    <!-- Email Client Header -->
+                    <div class="email-client-header">
+                        <div class="inbox-title">
+                            <i class="fa-solid fa-inbox"></i> Loop Mail: <strong>contract-bot@company.com</strong>
+                        </div>
+                        <div class="inbox-sub">Hộp thư giám sát luồng ký hợp đồng tự động</div>
+                    </div>
+
+                    <!-- Simulated Email Thread View -->
+                    <div class="email-thread-container" id="email-thread-list">
+                        <!-- Placeholder/Intro when no emails -->
+                        <div class="email-empty-state" id="email-empty">
+                            <div class="empty-icon"><i class="fa-solid fa-envelope-circle-check"></i></div>
+                            <h3>Chưa có email nào trong luồng</h3>
+                            <p>Hãy bấm "Tạo & Gửi Email Duyệt cho HRD" ở cột bên trái để khởi chạy luồng gửi email tự động duyệt hợp đồng.</p>
+                        </div>
+                    </div>
+
+                    <!-- Email Simulator Input (Action Center) -->
+                    <div class="email-input-area border-top hidden" id="email-simulator-input-area">
+                        <div class="input-header">
+                            <span class="badge" id="replier-badge"><i class="fa-solid fa-user"></i> HR Director</span>
+                            <span>Giả lập viết email trả lời của: <strong id="replier-email-label">vananh@company.com</strong></span>
+                        </div>
+                        
+                        <!-- Suggestion Quick Buttons -->
+                        <div class="quick-templates-section">
+                            <label>Chọn nhanh mẫu thư trả lời:</label>
+                            <div class="quick-btn-group" id="quick-reply-templates">
+                                <!-- Dynamically generated buttons based on current state -->
+                            </div>
+                        </div>
+
+                        <!-- Textarea for freeform email typing -->
+                        <div class="textarea-container">
+                            <textarea id="simulated-email-body" rows="4" placeholder="Nhập nội dung thư phản hồi tại đây (Tiếng Anh hoặc Tiếng Việt)..."></textarea>
+                        </div>
+
+                        <div class="action-bar-right">
+                            <button class="btn btn-secondary" id="btn-clear-reply">Xóa</button>
+                            <button class="btn btn-primary" id="btn-send-simulated-reply">
+                                <i class="fa-solid fa-paper-plane"></i> Gửi Thư Phản Hồi & Phân Tích
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Scanning Overlay Modal (Visual Scanning Effect) -->
+        <div class="modal-overlay hidden" id="scan-modal">
+            <div class="scan-modal-content">
+                <div class="scanner-box">
+                    <div class="scanner-grid"></div>
+                    <div class="scanner-bar"></div>
+                    <div class="scanner-icons">
+                        <i class="fa-solid fa-id-card active" id="scan-icon-id"></i>
+                        <i class="fa-solid fa-envelope-open-text" id="scan-icon-offer"></i>
+                        <i class="fa-solid fa-file-invoice" id="scan-icon-req"></i>
+                    </div>
+                </div>
+                <h3>Antigravity đang phân tích tài liệu...</h3>
+                <p id="scan-modal-status-text">Đang trích xuất thông tin định danh từ CCCD/Passport...</p>
+                <div class="loading-bar">
+                    <div class="loading-progress" id="scan-progress-bar"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Notification Toast -->
+        <div class="toast-container" id="toast-container"></div>
+
+        <!-- Real-world Production Architecture Modal -->
+        <div class="modal-overlay hidden" id="arch-modal">
+            <div class="modal-content arch-modal-content">
+                <div class="modal-header">
+                    <h2>Kiến Trúc Tự Động Hóa Thực Tế (Production Blueprint)</h2>
+                    <button class="btn-close" id="btn-close-arch"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="modal-body scrollable">
+                    <p>Dưới đây là sơ đồ kỹ thuật chi tiết giúp bạn triển khai quy trình này trên hệ thống của công ty bạn bằng cách tích hợp **Google Workspace (Gmail)** hoặc **Microsoft 365 (Outlook)** với **LLM (như Gemini API)**.</p>
+                    
+                    <div class="mermaid-diagram-box">
+                        <div class="diagram-title"><i class="fa-solid fa-network-wired"></i> Sơ đồ luồng dữ liệu tự động</div>
+                        <!-- Drawing a visual schema in boxes using HTML for maximum beauty instead of plain text Mermaid -->
+                        <div class="visual-flow">
+                            <div class="flow-card">
+                                <div class="flow-card-icon"><i class="fa-solid fa-file-lines"></i></div>
+                                <h4>1. Người dùng tải File</h4>
+                                <p>Tải CCCD, Offer lên Server nội bộ</p>
+                            </div>
+                            <div class="flow-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                            <div class="flow-card">
+                                <div class="flow-card-icon"><i class="fa-solid fa-brain text-success"></i></div>
+                                <h4>2. AI Parser (Gemini)</h4>
+                                <p>Đọc text/ảnh trích xuất JSON data</p>
+                            </div>
+                            <div class="flow-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                            <div class="flow-card">
+                                <div class="flow-card-icon"><i class="fa-solid fa-envelope-open-text text-warning"></i></div>
+                                <h4>3. Email Service API</h4>
+                                <p>Tự động gửi mail đính kèm cho HRD</p>
+                            </div>
+                            <div class="flow-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                            <div class="flow-card">
+                                <div class="flow-card-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                                <h4>4. Webhook / Mail Listener</h4>
+                                <p>Lắng nghe email trả lời tự động</p>
+                            </div>
+                            <div class="flow-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                            <div class="flow-card">
+                                <div class="flow-card-icon"><i class="fa-solid fa-signature text-primary"></i></div>
+                                <h4>5. Hoàn thành luồng</h4>
+                                <p>Ký số và lưu trữ hợp đồng</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3>Chi tiết các bước cài đặt</h3>
+                    <ol class="arch-steps">
+                        <li>
+                            <strong>Tự động đọc và trích xuất dữ liệu:</strong>
+                            <p>Sử dụng API <strong>Gemini 1.5 Flash / Document AI</strong>. Bạn chỉ cần gửi ảnh CCCD, PDF offer cho API với Prompt: <em>"Hãy trích xuất các thông tin sau dạng JSON: Họ tên, Ngày sinh, CCCD, Mức lương..."</em>. Trực quan hóa và cho phép kiểm tra thủ công (Human-in-the-loop) để đảm bảo chính xác 100%.</p>
+                        </li>
+                        <li>
+                            <strong>Gửi Email tự động (Mailing System):</strong>
+                            <p>Sử dụng thư viện hoặc API như <strong>Nodemailer</strong> (Node.js), <strong>SendGrid</strong> hoặc chính <strong>Microsoft Graph / Gmail API</strong> để gửi thư trực tiếp từ tài khoản của bạn. Đính kèm hợp đồng dạng DOCX/PDF tự động sinh ra từ mã nguồn.</p>
+                        </li>
+                        <li>
+                            <strong>Hộp thư chung & Lắng nghe email phản hồi (Webhook/Mail Polling):</strong>
+                            <p>Đăng ký một <strong>Webhook</strong> lắng nghe email đến (ví dụ Microsoft Graph Webhook hoặc Gmail Pub/Sub). Khi có email trả lời từ <code>vananh@company.com</code> hoặc CEO, Webhook sẽ đẩy nội dung email về API backend của bạn.</p>
+                        </li>
+                        <li>
+                            <strong>Bộ máy Phân tích ý định Email (Gemini Intent Analysis):</strong>
+                            <p>Thay vì so khớp từ khóa cứng nhắc, trong thực tế bạn có thể truyền nội dung email đó cho Gemini API với yêu cầu phân loại:</p>
+                            <pre><code>Phân tích email phản hồi sau và trả về định dạng JSON:
+Nội dung: "[Nội dung Email của HRD]"
+Yêu cầu trả về:
+{
+  "decision": "approved" | "rejected",
+  "reason": "Lý do từ chối (nếu có, để trống nếu duyệt)"
+}</code></pre>
+                        </li>
+                        <li>
+                            <strong>Quản lý trạng thái & Cập nhật hợp đồng:</strong>
+                            <p>Tương ứng với JSON nhận được từ AI, server sẽ đổi trạng thái hợp đồng trong cơ sở dữ liệu. Nếu từ chối, gửi cảnh báo Teams/Slack/Email ngược lại cho bạn. Nếu đồng ý, tự động kích hoạt bước tiếp theo (gửi email cho CEO).</p>
+                        </li>
+                    </ol>
+
+                    <div class="modal-footer">
+                        <button class="btn btn-primary" id="btn-close-arch-bottom">Tôi Đã Hiểu</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script src="app.js"></script>
+</body>
+</html>
